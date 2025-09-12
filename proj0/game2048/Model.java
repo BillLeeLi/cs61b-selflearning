@@ -141,6 +141,50 @@ public class Model extends Observable {
         changed = false;
 
         // TODO: Modify this.board (and perhaps this.score) to account
+        board.setViewingPerspective(side);  // 把板子的方向一下，使得tiles移动方向总是NORTH
+
+        // 以side=NORTH为例考虑解决这个问题的方法
+        // 对每一列，求出有多少个不为空的块,把它们依次编号(0-based)。然后求出merge发生的次数和位置(用靠上的那个块的序号)
+        // 比如某一列从上到下是 [4, 4, 2, 2], merge次数是2，发生位置是 [0, 2]
+        // 那么每个块的最后位置是原始序号减去小于原序号的merge位置的个数
+        // 比如上面的例子是 [0, 0, 1, 1] 0-0=0, 1-1=0, 2-1=1, 3-2=1
+        int sz = board.size();
+        for (int viewCol = 0; viewCol < sz; viewCol++) {
+            int tileNum = 0, merge = 0;
+            int[] tileRow = new int[sz];  // 记录每个不为空的tile的行号
+            for (int viewRow = sz - 1; viewRow >= 0; viewRow--) {
+                if (board.tile(viewCol, viewRow) != null) {
+                    tileRow[tileNum++] = viewRow;
+                }
+            }
+            int[] mergeIdx = new int[tileNum];  // 记录发生merge的tile的序号
+
+            // 统计发生merge的信息，包括merge发生的位置
+            for (int i = 0; i < tileNum; i++) {
+                if (i < tileNum - 1 && board.tile(viewCol, tileRow[i]).value() == board.tile(viewCol, tileRow[i + 1]).value()) {
+                    score += 2 * board.tile(viewCol, tileRow[i]).value();  // 计分
+                    mergeIdx[merge++] = i;  // 表示第i个tile和第i+1个tile发生了merge
+                    i++;
+                }
+            }
+
+            // 确定每个tile最后移动到的位置，从上到下进行计算防止出错
+            for (int idx = 0; idx < tileNum; idx++) {
+                int prevMerge = 0;  // 记录上方发生的merge次数
+                for (int i = 0; i < merge && mergeIdx[i] < idx; i++) {
+                    prevMerge++;
+                }
+
+                int newRow = (sz - 1) - idx + prevMerge;
+                if (newRow != tileRow[idx]) {  // 如果有任何一个tile的行发生了变化，记录下来
+                    changed = true;
+                }
+                board.move(viewCol, newRow, board.tile(viewCol, tileRow[idx]));
+            }
+        }
+
+        board.setViewingPerspective(Side.NORTH);  // 最后记得把板子的方向转回来
+
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
 
