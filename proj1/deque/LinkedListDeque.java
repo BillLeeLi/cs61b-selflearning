@@ -6,6 +6,7 @@ public class LinkedListDeque<T> {
         public T item;
         public Node next;  // 下一个节点
         public Node prev;  // 上一个节点
+
         public Node(T i, Node n, Node p) {
             item = i;
             next = n;
@@ -82,6 +83,7 @@ public class LinkedListDeque<T> {
         size--;
         return discardedNode.item;
     }
+
     public T get(int index) {
         if (size <= index) {
             return null;
@@ -95,10 +97,9 @@ public class LinkedListDeque<T> {
                 n = n.next;
             }
             return n.item;
-        }
-        else {
+        } else {
             n = sentinel.prev;
-            for (int i = size - 1; i > index; i++) {
+            for (int i = size - 1; i > index; i--) {
                 n = n.prev;
             }
         }
@@ -123,6 +124,24 @@ public class LinkedListDeque<T> {
             return true;
         }
         return false;
+    }
+
+    public T getRecursive(int index) {
+        if (index >= size) {
+            return null;
+        } else {
+            return getRecHelper(index, sentinel.next);
+        }
+    }
+
+    private T getRecHelper(int index, Node beg) {
+        if (beg == null) {
+            return null;
+        } else if (index == 0) {
+            return beg.item;
+        } else {
+            return getRecHelper(index - 1, beg.next);
+        }
     }
 //    public Iterator<T> iterator();
 }
