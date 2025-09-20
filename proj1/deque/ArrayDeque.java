@@ -9,6 +9,21 @@ public class ArrayDeque<T> {
     private int end;  // end表示尾后
     private int RFACTOR = 2;
 
+    private void resize(int capacity) {
+        if (capacity < size) {
+            return;
+        }
+        T[] newArr = (T[]) new Object[capacity];
+        int pos = (beg + 1) % items.length;
+        for (int i = 0; i < size; i++) {
+            newArr[i] = items[pos];
+            pos = (pos + 1) % items.length;
+        }
+        items = newArr;
+        beg = capacity - 1;
+        end = size;
+    }
+
     public ArrayDeque() {
         items = (T[]) new Object[8];
         size = 0;
@@ -18,15 +33,7 @@ public class ArrayDeque<T> {
 
     public void addFirst(T item) {
         if (size == items.length) {
-            T[] newArr = (T[]) new Object[RFACTOR * size];
-            int pos = (beg + 1) % items.length;
-            for (int i = 0; i < size; i++) {
-                newArr[i] = items[pos];
-                pos = (pos + 1) % items.length;
-            }
-            items = newArr;
-            beg = items.length - 1;
-            end = size;
+            resize(RFACTOR * size);
         }
         items[beg] = item;
         beg = (beg + items.length - 1) % items.length;
@@ -35,15 +42,7 @@ public class ArrayDeque<T> {
 
     public void addLast(T item) {
         if (size == items.length) {
-            T[] newArr = (T[]) new Object[RFACTOR * size];
-            int pos = (beg + 1) % items.length;
-            for (int i = 0; i < size; i++) {
-                newArr[i] = items[pos];
-                pos = (pos + 1) % items.length;
-            }
-            items = newArr;
-            beg = items.length - 1;
-            end = size;
+            resize(RFACTOR * size);
         }
         items[end] = item;
         end = (end + 1) % items.length;
@@ -74,6 +73,9 @@ public class ArrayDeque<T> {
         T res = items[beg];
         items[beg] = null;
         size--;
+        if (size <= items.length / 4 && items.length >= 8) {
+            resize(items.length / 2);
+        }
         return res;
     }
 
