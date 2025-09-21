@@ -1,8 +1,8 @@
 package deque;
 
-import org.w3c.dom.Node;
+import java.util.Iterator;
 
-public class ArrayDeque<T> {
+public class ArrayDeque<T> implements Iterable<T> {
     private T[] items;
     private int size;
     private int beg;  // beg表示首前
@@ -97,5 +97,38 @@ public class ArrayDeque<T> {
         return items[(beg + index + 1) % items.length];
     }
 
-    //    public Iterator<T> iterator();
+    public Iterator<T> iterator() {
+        return new ADIterator();
+    }
+
+    private class ADIterator implements Iterator<T> {
+        private int pos;
+        public ADIterator() {
+            pos = (beg + 1) % items.length;  // 指向第一个元素
+        }
+
+        public boolean hasNext() {
+            return pos != end;
+        }
+
+        public T next() {
+            if (pos == end) {
+                return null;
+            }
+            T res = items[pos];
+            pos = (pos + 1) % items.length;
+            return res;
+        }
+    }
+
+    public static void main(String[] args) {
+        ArrayDeque<Integer> ad = new ArrayDeque<>();
+        ad.addFirst(10);
+        ad.addLast(50);
+        ad.addLast(100);
+        ad.addFirst(0);
+        for (Integer x: ad) {
+            System.out.println(x);
+        }
+    }
 }

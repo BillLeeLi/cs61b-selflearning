@@ -165,7 +165,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
 
         @Override
         public boolean hasNext() {
-            return pos.next != sentinel;
+            return pos != sentinel;
         }
 
         @Override
@@ -176,6 +176,17 @@ public class LinkedListDeque<T> implements Iterable<T> {
             T res = pos.item;
             pos = pos.next;
             return res;
+        }
+    }
+
+    public static void main(String[] args) {
+        LinkedListDeque<Integer> lld = new LinkedListDeque<>(37);
+        lld.addFirst(210);
+        lld.addLast(486);
+        lld.addFirst(6);
+        lld.addFirst(77);
+        for (Integer x: lld) {
+            System.out.println(x);
         }
     }
 }
