@@ -3,44 +3,44 @@ import java.util.Iterator;
 
 public class LinkedListDeque<T> implements Iterable<T> {
     // 采用循环链表、双向链接的实现方式
-    private class Node {
+    private static class Node<T> {
         public T item;
-        public Node next;  // 下一个节点
-        public Node prev;  // 上一个节点
+        public Node<T> next;  // 下一个节点
+        public Node<T> prev;  // 上一个节点
 
-        public Node(T i, Node n, Node p) {
+        public Node(T i, Node<T> n, Node<T> p) {
             item = i;
             next = n;
             prev = p;
         }
     }
 
-    private Node sentinel;
+    private Node<T> sentinel;
     private int size;
 
     public LinkedListDeque() {
-        sentinel = new Node(null, null, null);  // 注意这时sentinel是null，所以不能在构造函数中把prev和next设为sentinel
+        sentinel = new Node<>(null, null, null);  // 注意这时sentinel是null，所以不能在构造函数中把prev和next设为sentinel
         sentinel.prev = sentinel;
         sentinel.next = sentinel;
         size = 0;
     }
 
     public LinkedListDeque(T first) {
-        Node firstNode = new Node(first, null, null);
-        sentinel = new Node(null, firstNode, firstNode);
+        Node<T> firstNode = new Node<>(first, null, null);
+        sentinel = new Node<>(null, firstNode, firstNode);
         firstNode.prev = firstNode.next = sentinel;
         size = 1;
     }
 
     public void addFirst(T item) {
-        Node newNode = new Node(item, sentinel.next, sentinel);
+        Node<T> newNode = new Node<>(item, sentinel.next, sentinel);
         sentinel.next.prev = newNode;
         sentinel.next = newNode;
         size++;
     }
 
     public void addLast(T item) {
-        Node newNode = new Node(item, sentinel, sentinel.prev);
+        Node<T> newNode = new Node<>(item, sentinel, sentinel.prev);
         sentinel.prev.next = newNode;
         sentinel.prev = newNode;
         size++;
@@ -55,7 +55,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
     }
 
     public void printDeque() {
-        Node n = sentinel.next;
+        Node<T> n = sentinel.next;
         while (n != sentinel) {
             System.out.print(n.item + " ");
             n = n.next;
@@ -67,7 +67,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
         if (size == 0) {
             return null;
         }
-        Node discardedNode = sentinel.next;
+        Node<T> discardedNode = sentinel.next;
         sentinel.next = discardedNode.next;
         sentinel.next.prev = sentinel;
         size--;
@@ -78,7 +78,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
         if (size == 0) {
             return null;
         }
-        Node discardedNode = sentinel.prev;
+        Node<T> discardedNode = sentinel.prev;
         sentinel.prev = discardedNode.prev;
         sentinel.prev.next = sentinel;
         size--;
@@ -90,7 +90,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
             return null;
         }
 
-        Node n;
+        Node<T> n;
         if (index < size / 2) {
             // 正向查找
             n = sentinel.next;
@@ -119,8 +119,8 @@ public class LinkedListDeque<T> implements Iterable<T> {
                 return false;
             }
 
-            Node n1 = sentinel.next;
-            Node n2 = (Node) ((LinkedListDeque<?>) o).sentinel.next;
+            Node<T> n1 = sentinel.next;
+            Node<T> n2 = (Node<T>) ((LinkedListDeque<?>) o).sentinel.next;
             while (n1 != sentinel) {
                 if (!n1.item.equals(n2)) {
                     return false;
@@ -141,7 +141,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
         }
     }
 
-    private T getRecHelper(int index, Node beg) {
+    private T getRecHelper(int index, Node<T> beg) {
         if (beg == null) {
             return null;
         } else if (index == 0) {
@@ -158,7 +158,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
     }
 
     private class LLDIterator implements Iterator<T> {
-        private Node pos;
+        private Node<T> pos;
         public LLDIterator() {
             pos = sentinel.next;
         }

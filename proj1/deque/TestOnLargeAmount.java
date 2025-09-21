@@ -1,5 +1,6 @@
 package deque;
 
+import edu.neu.ccs.filter.CaseActionFilter;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import edu.princeton.cs.algs4.StdRandom;
@@ -62,6 +63,13 @@ public class TestOnLargeAmount {
                     Integer item = correct.get(randIdx);
 //                    System.out.println("get position " + randIdx + ": " + item);
                     Integer item2 = underTest.get(randIdx);
+                    assertEquals(item, item2);
+                    break;
+                }
+                case 7: {
+                    int randIdx = StdRandom.uniform(0, correct.size() + 1);
+                    Integer item = correct.get(randIdx);
+                    Integer item2 = underTest.getRecursive(randIdx);
                     assertEquals(item, item2);
                     break;
                 }
