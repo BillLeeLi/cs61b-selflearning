@@ -1,6 +1,7 @@
 package deque;
+import java.util.Iterator;
 
-public class LinkedListDeque<T> {
+public class LinkedListDeque<T> implements Iterable<T> {
     // 采用循环链表、双向链接的实现方式
     private class Node {
         public T item;
@@ -18,7 +19,7 @@ public class LinkedListDeque<T> {
     private int size;
 
     public LinkedListDeque() {
-        sentinel = new Node((T) new Object(), null, null);  // 注意这时sentinel是null，所以不能在构造函数中把prev和next设为sentinel
+        sentinel = new Node(null, null, null);  // 注意这时sentinel是null，所以不能在构造函数中把prev和next设为sentinel
         sentinel.prev = sentinel;
         sentinel.next = sentinel;
         size = 0;
@@ -26,7 +27,7 @@ public class LinkedListDeque<T> {
 
     public LinkedListDeque(T first) {
         Node firstNode = new Node(first, null, null);
-        sentinel = new Node((T) new Object(), firstNode, firstNode);
+        sentinel = new Node(null, firstNode, firstNode);
         firstNode.prev = firstNode.next = sentinel;
         size = 1;
     }
@@ -107,6 +108,12 @@ public class LinkedListDeque<T> {
     }
 
     public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (this == o) {
+            return true;
+        }
         if (o instanceof LinkedListDeque) {
             if (size != ((LinkedListDeque<?>) o).size) {
                 return false;
@@ -144,4 +151,31 @@ public class LinkedListDeque<T> {
         }
     }
 //    public Iterator<T> iterator();
+
+    @Override
+    public Iterator<T> iterator() {
+        return new LLDIterator();
+    }
+
+    private class LLDIterator implements Iterator<T> {
+        private Node pos;
+        public LLDIterator() {
+            pos = sentinel.next;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return pos.next != sentinel;
+        }
+
+        @Override
+        public T next() {
+            if (pos == sentinel) {
+                return null;
+            }
+            T res = pos.item;
+            pos = pos.next;
+            return res;
+        }
+    }
 }
