@@ -4,7 +4,6 @@ import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
 
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -117,13 +116,13 @@ public class Engine {
         // that works for many different input types.
 
         long seed = Integer.parseInt(input.substring(1, input.length() - 1));  // input的形式为 N##...#S,中间的部分是种子
-        Random rand = new Random();
+        Random rand = new Random(seed);
 
         TETile[][] finalWorldFrame = new TETile[WIDTH][HEIGHT];
         fill(finalWorldFrame, 0, 0, WIDTH, HEIGHT, Tileset.NOTHING);  // 初始化为全空的地图
 
         // 随机生成房间
-        int roomNum = RandomUtils.uniform(rand, WIDTH * HEIGHT / (maxWid * maxH) / 3, WIDTH * HEIGHT / (maxWid * maxH) / 2);
+        int roomNum = RandomUtils.uniform(rand, WIDTH * HEIGHT / (maxWid * maxH) / 2, WIDTH * HEIGHT / (maxWid * maxH) * 2 / 3);
         List<Room> rooms = renderRooms(finalWorldFrame, WIDTH, HEIGHT, roomNum, rand);
         List<Edge> edges = new ArrayList<>();
         for (int i = 0; i < roomNum; i++) {
@@ -134,6 +133,14 @@ public class Engine {
         List<Edge> chosenEdges = kruskal(edges, roomNum);
         for (Edge e: chosenEdges) {
             addEgde(finalWorldFrame, e, rand);  // 用随机的方式添加边
+        }
+
+        for (int i = 0; i < WIDTH; i++) {
+            for (int j = 0; j < HEIGHT; j++) {
+                if (finalWorldFrame[i][j].equals(Tileset.NOTHING) && check(finalWorldFrame, WIDTH, HEIGHT, i, j)) {
+                    finalWorldFrame[i][j] = Tileset.WALL;
+                }
+            }
         }
 
         return finalWorldFrame;
@@ -162,8 +169,8 @@ public class Engine {
         while (true) {  // 循环直到生成了符合要求的房间
             roomWid = RandomUtils.uniform(rand, minWid, maxWid);
             roomH = RandomUtils.uniform(rand, minH, maxH);
-            x = RandomUtils.uniform(rand, 0, wid - roomWid);  // 注意这个上界已经保证了生成的矩形不会延申到地图之外
-            y = RandomUtils.uniform(rand, 0, h - roomH);
+            x = RandomUtils.uniform(rand, 1, wid - roomWid - 1);  // 注意这个上界已经保证了生成的矩形不会延申到地图之外
+            y = RandomUtils.uniform(rand, 1, h - roomH - 1);
 
             boolean flag = true;
             for (int i = x; i < x + roomWid && flag; i++) {
@@ -191,7 +198,7 @@ public class Engine {
             for (int j = -1; j < 2; j++) {
                 tx = x + i;
                 ty = y + j;
-                if (0 <= tx && tx < wid && 0 <= ty && ty < h && !world[tx][ty].equals(Tileset.NOTHING)) {
+                if (0 <= tx && tx < wid && 0 <= ty && ty < h && world[tx][ty].equals(Tileset.FLOOR)) {
                     return true;
                 }
             }
