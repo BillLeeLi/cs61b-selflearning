@@ -87,13 +87,13 @@ public class Engine {
         while (true) {  // 循环直到生成了符合要求的房间
             roomWid = RandomUtils.uniform(rand, minWid, maxWid);
             roomH = RandomUtils.uniform(rand, minH, maxH);
-            x = RandomUtils.uniform(rand, 0, WIDTH - roomWid);
-            y = RandomUtils.uniform(rand, 0, HEIGHT - roomH);
+            x = RandomUtils.uniform(rand, 0, wid - roomWid);  // 注意这个上界已经保证了生成的矩形不会延申到地图之外
+            y = RandomUtils.uniform(rand, 0, h - roomH);
 
             boolean flag = true;
             for (int i = x; i < x + roomWid && flag; i++) {
                 for (int j = y; j < y + roomH; j++) {
-                    if (!world[i][j].equals(Tileset.NOTHING)) {  // 和其他的房间重合了
+                    if (check(world, wid, h, i, j)) {  // 和其他的房间相邻了
                         flag = false;
                         break;
                     }
@@ -106,5 +106,20 @@ public class Engine {
                 break;
             }
         }
+    }
+
+    // 检查world[x][y]有无相邻的非空块
+    boolean check(TETile[][] world, int wid, int h, int x, int y) {
+        int tx, ty;
+        for (int i = -1; i < 2; i++) {
+            for (int j = -1; j < 2; j++) {
+                tx = x + i;
+                ty = y + j;
+                if (0 <= tx && tx < wid && 0 <= ty && ty < h && !world[tx][ty].equals(Tileset.NOTHING)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
