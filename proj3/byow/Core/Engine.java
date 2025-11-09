@@ -3,7 +3,9 @@ package byow.Core;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
+import edu.princeton.cs.introcs.StdDraw;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -18,6 +20,12 @@ public class Engine {
     public static final int maxH = 6;  // 随机生成的room的最大高度
     public static final int minWid = 2;  // 随机生成的room的最小宽度
     public static final int minH = 2;  // 随机生成的room的最小高度
+    public TETile[][] world;
+    public int playerX;  // 记录玩家的位置
+    public int playerY;
+    public static final int width = 40;
+    public static final int height = 40;
+
 
     // Room类，记录一个房间的信息,包括它的大小和在地图中的位置
     public static class Room {
@@ -83,6 +91,32 @@ public class Engine {
      * including inputs from the main menu.
      */
     public void interactWithKeyboard() {
+        createMenu();
+
+        char oper;
+        while (true) {  // 等待用户输入操作
+            while (!StdDraw.hasNextKeyTyped());
+            oper = StdDraw.nextKeyTyped();
+            switch (oper) {
+                case 'N':
+                case 'n': {
+                    System.out.println("N");
+                    interactWithInputString(getSeed());
+                    break;
+                }
+                case 'L':
+                case 'l':
+                    System.out.println("L");
+                    break;
+                case 'Q':
+                case 'q':
+                    System.out.println("q");
+                    System.exit(1);
+                default:
+                    System.out.println(oper);
+                    break;
+            }
+        }
     }
 
     /**
@@ -90,18 +124,18 @@ public class Engine {
      * of characters (for example, "n123sswwdasdassadwas", "n123sss:q", "lwww"). The engine should
      * behave exactly as if the user typed these characters into the engine using
      * interactWithKeyboard.
-     *
+     * <p>
      * Recall that strings ending in ":q" should cause the game to quite save. For example,
      * if we do interactWithInputString("n123sss:q"), we expect the game to run the first
      * 7 commands (n123sss) and then quit and save. If we then do
      * interactWithInputString("l"), we should be back in the exact same state.
-     *
+     * <p>
      * In other words, both of these calls:
-     *   - interactWithInputString("n123sss:q")
-     *   - interactWithInputString("lww")
-     *
+     * - interactWithInputString("n123sss:q")
+     * - interactWithInputString("lww")
+     * <p>
      * should yield the exact same world state as:
-     *   - interactWithInputString("n123sssww")
+     * - interactWithInputString("n123sssww")
      *
      * @param input the input string to feed to your program
      * @return the 2D TETile[][] representing the state of the world
@@ -115,6 +149,26 @@ public class Engine {
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
         // that works for many different input types.
 
+        input = input.toUpperCase();
+        char[] inputCharArray = input.toCharArray();  // 因为我们无视大小写，所以把输入转为大写
+        for (int i = 0; i < inputCharArray.length; i++) {
+            if (inputCharArray[i] == 'N') {  // 创建一个新世界
+                int j = i + 1;
+                while (j < inputCharArray.length && inputCharArray[j] != 'S') {  // 遇到字符S或s为止
+                    j++;
+                }
+                world = newWorld(input.substring(i, j + 1));  // 子字符串的形式为N##...#S
+                i = j;
+            } else if ("WASD".contains(input.substring(i, i + 1))) {
+                move(inputCharArray[i]);
+            }
+        }
+
+        return world;
+    }
+
+    // 根据input的内容创建一个新的地图
+    TETile[][] newWorld(String input) {
         long seed = Integer.parseInt(input.substring(1, input.length() - 1));  // input的形式为 N##...#S,中间的部分是种子
         Random rand = new Random(seed);
 
@@ -131,7 +185,7 @@ public class Engine {
             }
         }
         List<Edge> chosenEdges = kruskal(edges, roomNum);
-        for (Edge e: chosenEdges) {
+        for (Edge e : chosenEdges) {
             addEgde(finalWorldFrame, e, rand);  // 用随机的方式添加边
         }
 
@@ -143,11 +197,25 @@ public class Engine {
             }
         }
 
+        // 在地图中随机选择一个位置作为玩家的初始位置
+        while (true) {
+            int x = RandomUtils.uniform(rand, 0, WIDTH);
+            int y = RandomUtils.uniform(rand, 0, HEIGHT);
+            if (finalWorldFrame[x][y].equals(Tileset.FLOOR)) {
+                finalWorldFrame[x][y] = Tileset.AVATAR;
+                playerX = x;
+                playerY = y;
+                break;
+            }
+        }
+
+        ter.initialize(WIDTH, HEIGHT);
+        ter.renderFrame(finalWorldFrame);
         return finalWorldFrame;
     }
 
     // 把world中[x:x+wid][y:y+h]的部分填充为tileType
-     public void fill(TETile[][] world, int x, int y, int wid, int h, TETile tileType) {
+    public void fill(TETile[][] world, int x, int y, int wid, int h, TETile tileType) {
         for (int i = x; i < x + wid; i++) {
             for (int j = y; j < y + h; j++) {
                 world[i][j] = tileType;
@@ -281,5 +349,90 @@ public class Engine {
                 }
             }
         }
+    }
+
+    public void move(char oper) {
+        switch (oper) {
+            case 'W': {
+                if (!world[playerX][playerY + 1].equals(Tileset.WALL)) {
+                    world[playerX][playerY] = Tileset.FLOOR;
+                    playerY++;
+                }
+                break;
+            }
+            case 'A': {
+                if (!world[playerX - 1][playerY].equals(Tileset.WALL)) {
+                    world[playerX][playerY] = Tileset.FLOOR;
+                    playerX--;
+                }
+                break;
+            }
+            case 'S': {
+                if (!world[playerX][playerY - 1].equals(Tileset.WALL)) {
+                    world[playerX][playerY] = Tileset.FLOOR;
+                    playerY--;
+                }
+                break;
+            }
+            case 'D': {
+                if (!world[playerX + 1][playerY].equals(Tileset.WALL)) {
+                    world[playerX][playerY] = Tileset.FLOOR;
+                    playerX++;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+        world[playerX][playerY] = Tileset.AVATAR;
+    }
+
+    public void createMenu() {
+        StdDraw.setCanvasSize(width * 16, width * 16);
+        Font font = new Font("Monaco", Font.BOLD, 30);
+        StdDraw.setFont(font);
+        StdDraw.setPenColor(Color.WHITE);
+        StdDraw.setXscale(0, width);
+        StdDraw.setYscale(0, height);
+        StdDraw.clear(Color.BLACK);
+        StdDraw.enableDoubleBuffering();
+        StdDraw.text((double) width / 2,(double) height / 4 * 3,"CS61B: BYoW GAME");
+
+        font = new Font("Monaco", Font.PLAIN, 20);
+        StdDraw.setFont(font);
+        String[] items = {
+                "New Game (N)",
+                "Load Game (L)",
+                "Quit (Q)"
+        };
+        double lineHeight = 1.5; // 这是一个经验值，可以根据实际字体大小调整
+        double startY = (double) height / 2 + (items.length - 1) * lineHeight / 2; // 起始Y坐标，居中对齐
+
+        // 逐行绘制
+        for (int i = 0; i < items.length; i++) {
+            double y = startY - i * lineHeight; // 从上到下绘制
+            StdDraw.text(width / 2.0, y, items[i]);
+        }
+
+        StdDraw.show();
+    }
+
+    public String getSeed() {
+        double lineHeight = 1.5;
+        String seed = "";
+        char c = 0;
+        StdDraw.clear(Color.BLACK);  // 清空屏幕
+        StdDraw.text((double) width / 2, (double) height / 2, "Please enter your seed(End with 'S'):");
+        StdDraw.show();
+        while (c != 's' && c != 'S'){
+            while (!StdDraw.hasNextKeyTyped()) ;
+            c = StdDraw.nextKeyTyped();
+            seed += c;
+            StdDraw.clear(Color.BLACK);
+            StdDraw.text((double) width / 2, (double) height / 2, "Please enter your seed(End with 'S'):");
+            StdDraw.text((double) width / 2, (double) height / 2 - lineHeight, seed);
+            StdDraw.show();
+        }
+        return "N" + seed;
     }
 }
