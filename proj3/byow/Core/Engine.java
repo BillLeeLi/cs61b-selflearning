@@ -4,14 +4,18 @@ import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
 import edu.princeton.cs.introcs.StdDraw;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
 public class Engine {
+    private static final Logger log = LoggerFactory.getLogger(Engine.class);
     TERenderer ter = new TERenderer();
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
@@ -23,8 +27,8 @@ public class Engine {
     public TETile[][] world;
     public int playerX;  // 记录玩家的位置
     public int playerY;
-    public static final int width = 40;
-    public static final int height = 40;
+    public static final int windowWid = 40;
+    public static final int windowH = 40;
 
 
     // Room类，记录一个房间的信息,包括它的大小和在地图中的位置
@@ -109,6 +113,7 @@ public class Engine {
                 case 'L':
                 case 'l':
                     System.out.println("L");
+                    interactWithInputString("L");
                     flag = false;
                     break;
                 case 'Q':
@@ -165,6 +170,13 @@ public class Engine {
                 i = j;
             } else if ("WASD".contains(input.substring(i, i + 1))) {
                 move(inputCharArray[i]);
+            } else if (inputCharArray[i] == ':') {
+                if (input.substring(i, Math.min(input.length(), i + 2)).equalsIgnoreCase(":Q")) {
+                    save("archive.txt");
+                    break;  // 存档结束需要立刻退出,不处理后续的字符串
+                }
+            } else if (inputCharArray[i] == 'L') {
+                world = load("archive.txt");
             }
         }
 
@@ -396,15 +408,15 @@ public class Engine {
     }
 
     public void createMenu() {
-        StdDraw.setCanvasSize(width * 16, width * 16);
+        StdDraw.setCanvasSize(windowWid * 16, windowWid * 16);
         Font font = new Font("Monaco", Font.BOLD, 30);
         StdDraw.setFont(font);
         StdDraw.setPenColor(Color.WHITE);
-        StdDraw.setXscale(0, width);
-        StdDraw.setYscale(0, height);
+        StdDraw.setXscale(0, windowWid);
+        StdDraw.setYscale(0, windowH);
         StdDraw.clear(Color.BLACK);
         StdDraw.enableDoubleBuffering();
-        StdDraw.text((double) width / 2,(double) height / 4 * 3,"CS61B: BYoW GAME");
+        StdDraw.text((double) windowWid / 2,(double) windowH / 4 * 3,"CS61B: BYoW GAME");
 
         font = new Font("Monaco", Font.PLAIN, 20);
         StdDraw.setFont(font);
@@ -414,12 +426,12 @@ public class Engine {
                 "Quit (Q)"
         };
         double lineHeight = 1.5; // 这是一个经验值，可以根据实际字体大小调整
-        double startY = (double) height / 2 + (items.length - 1) * lineHeight / 2; // 起始Y坐标，居中对齐
+        double startY = (double) windowH / 2 + (items.length - 1) * lineHeight / 2; // 起始Y坐标，居中对齐
 
         // 逐行绘制
         for (int i = 0; i < items.length; i++) {
             double y = startY - i * lineHeight; // 从上到下绘制
-            StdDraw.text(width / 2.0, y, items[i]);
+            StdDraw.text(windowWid / 2.0, y, items[i]);
         }
 
         StdDraw.show();
@@ -430,15 +442,15 @@ public class Engine {
         String seed = "";
         char c = 0;
         StdDraw.clear(Color.BLACK);  // 清空屏幕
-        StdDraw.text((double) width / 2, (double) height / 2, "Please enter your seed(End with 'S'):");
+        StdDraw.text((double) windowWid / 2, (double) windowH / 2, "Please enter your seed(End with 'S'):");
         StdDraw.show();
         while (c != 's' && c != 'S'){
             while (!StdDraw.hasNextKeyTyped()) ;
             c = StdDraw.nextKeyTyped();
             seed += c;
             StdDraw.clear(Color.BLACK);
-            StdDraw.text((double) width / 2, (double) height / 2, "Please enter your seed(End with 'S'):");
-            StdDraw.text((double) width / 2, (double) height / 2 - lineHeight, seed);
+            StdDraw.text((double) windowWid / 2, (double) windowH / 2, "Please enter your seed(End with 'S'):");
+            StdDraw.text((double) windowWid / 2, (double) windowH / 2 - lineHeight, seed);
             StdDraw.show();
         }
         return "N" + seed;
@@ -454,5 +466,92 @@ public class Engine {
                 move(c);
             }
         }
+    }
+
+    public void save(String path) {
+        File file = new File(path);
+        if (!file.exists()) {  // 如果不存在archive.txt就创建一个
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                log.error("e: ", e);
+            }
+        }
+
+        // 把地图的当前状况写入archive.txt
+        try (FileWriter fw = new FileWriter(file)) {
+            for (int i = 0; i < WIDTH; i++) {
+                for (int j = 0; j < HEIGHT; j++) {
+                    fw.write(world[i][j].character());
+                }
+                fw.write("\n");
+            }
+            fw.flush();
+        } catch (IOException e) {
+            log.error("e: ", e);
+        }
+    }
+
+    public TETile[][] load(String path) {
+        File file = new File(path);
+        String line;
+        TETile[][] worldFrame = new TETile[WIDTH][HEIGHT];
+
+        // 还原地图
+        try (FileReader fr = new FileReader(file)) {
+            BufferedReader br = new BufferedReader(fr);
+            for (int i = 0; i < WIDTH; i++) {
+                line = br.readLine();
+                for (int j = 0; j < HEIGHT; j++) {
+                    switch (line.charAt(j)) {
+                        case '@': {
+                            worldFrame[i][j] = Tileset.AVATAR;
+                            playerX = i;
+                            playerY = j;
+                            break;
+                        }
+                        case ' ':
+                            worldFrame[i][j] = Tileset.NOTHING;
+                            break;
+                        case '·':
+                            worldFrame[i][j] = Tileset.FLOOR;
+                            break;
+                        case '#':
+                            worldFrame[i][j] = Tileset.WALL;
+                            break;
+                        case '"':
+                            worldFrame[i][j] = Tileset.GRASS;
+                            break;
+                        case '≈':
+                            worldFrame[i][j] = Tileset.WATER;
+                            break;
+                        case '❀':
+                            worldFrame[i][j] = Tileset.FLOWER;
+                            break;
+                        case '▲':
+                            worldFrame[i][j] = Tileset.MOUNTAIN;
+                            break;
+                        case '▒':
+                            worldFrame[i][j] = Tileset.SAND;
+                            break;
+                        case '▢':
+                            worldFrame[i][j] = Tileset.UNLOCKED_DOOR;
+                            break;
+                        case '█':
+                            worldFrame[i][j] = Tileset.LOCKED_DOOR;
+                            break;
+                        case '♠':
+                            worldFrame[i][j] = Tileset.TREE;
+                            break;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            log.error("e: ", e);
+        }
+
+        ter.initialize(WIDTH, HEIGHT);
+        ter.renderFrame(worldFrame);
+        return worldFrame;
     }
 }
