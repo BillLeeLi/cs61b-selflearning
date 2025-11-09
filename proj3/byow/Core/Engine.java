@@ -94,7 +94,8 @@ public class Engine {
         createMenu();
 
         char oper;
-        while (true) {  // 等待用户输入操作
+        boolean flag = true;
+        while (flag) {  // 等待用户输入操作
             while (!StdDraw.hasNextKeyTyped());
             oper = StdDraw.nextKeyTyped();
             switch (oper) {
@@ -102,11 +103,13 @@ public class Engine {
                 case 'n': {
                     System.out.println("N");
                     interactWithInputString(getSeed());
+                    flag = false;
                     break;
                 }
                 case 'L':
                 case 'l':
                     System.out.println("L");
+                    flag = false;
                     break;
                 case 'Q':
                 case 'q':
@@ -117,6 +120,7 @@ public class Engine {
                     break;
             }
         }
+        waitForOper();
     }
 
     /**
@@ -157,7 +161,7 @@ public class Engine {
                 while (j < inputCharArray.length && inputCharArray[j] != 'S') {  // 遇到字符S或s为止
                     j++;
                 }
-                world = newWorld(input.substring(i, j + 1));  // 子字符串的形式为N##...#S
+                world = newWorld(Integer.parseInt(input.substring(i + 1, j)));  // i的位置是N,是seed的开始;j的位置是S,是seed的结尾
                 i = j;
             } else if ("WASD".contains(input.substring(i, i + 1))) {
                 move(inputCharArray[i]);
@@ -168,8 +172,7 @@ public class Engine {
     }
 
     // 根据input的内容创建一个新的地图
-    TETile[][] newWorld(String input) {
-        long seed = Integer.parseInt(input.substring(1, input.length() - 1));  // input的形式为 N##...#S,中间的部分是种子
+    TETile[][] newWorld(int seed) {
         Random rand = new Random(seed);
 
         TETile[][] finalWorldFrame = new TETile[WIDTH][HEIGHT];
@@ -353,6 +356,7 @@ public class Engine {
 
     public void move(char oper) {
         switch (oper) {
+            case 'w':
             case 'W': {
                 if (!world[playerX][playerY + 1].equals(Tileset.WALL)) {
                     world[playerX][playerY] = Tileset.FLOOR;
@@ -360,6 +364,7 @@ public class Engine {
                 }
                 break;
             }
+            case 'a':
             case 'A': {
                 if (!world[playerX - 1][playerY].equals(Tileset.WALL)) {
                     world[playerX][playerY] = Tileset.FLOOR;
@@ -367,6 +372,7 @@ public class Engine {
                 }
                 break;
             }
+            case 's':
             case 'S': {
                 if (!world[playerX][playerY - 1].equals(Tileset.WALL)) {
                     world[playerX][playerY] = Tileset.FLOOR;
@@ -374,6 +380,7 @@ public class Engine {
                 }
                 break;
             }
+            case 'd':
             case 'D': {
                 if (!world[playerX + 1][playerY].equals(Tileset.WALL)) {
                     world[playerX][playerY] = Tileset.FLOOR;
@@ -385,6 +392,7 @@ public class Engine {
                 break;
         }
         world[playerX][playerY] = Tileset.AVATAR;
+        ter.renderFrame(world);
     }
 
     public void createMenu() {
@@ -434,5 +442,17 @@ public class Engine {
             StdDraw.show();
         }
         return "N" + seed;
+    }
+
+    public void waitForOper() {
+        char c;
+        while (true) {
+            while (!StdDraw.hasNextKeyTyped()) ;
+            c = StdDraw.nextKeyTyped();
+            System.out.println(c);
+            if ("WASDwasd".contains(String.valueOf(c))) {
+                move(c);
+            }
+        }
     }
 }
