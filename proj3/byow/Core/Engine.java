@@ -119,13 +119,12 @@ public class Engine {
                 case 'Q':
                 case 'q':
                     System.out.println("q");
-                    System.exit(1);
+                    System.exit(0);
                 default:
                     System.out.println(oper);
                     break;
             }
         }
-        waitForOper();
     }
 
     /**
@@ -173,7 +172,6 @@ public class Engine {
             } else if (inputCharArray[i] == ':') {
                 if (input.substring(i, Math.min(input.length(), i + 2)).equalsIgnoreCase(":Q")) {
                     save("archive.txt");
-                    break;  // 存档结束需要立刻退出,不处理后续的字符串
                 }
             } else if (inputCharArray[i] == 'L') {
                 world = load("archive.txt");
@@ -462,8 +460,14 @@ public class Engine {
             while (!StdDraw.hasNextKeyTyped()) ;
             c = StdDraw.nextKeyTyped();
             System.out.println(c);
-            if ("WASDwasd".contains(String.valueOf(c))) {
+            if ("WASDwasd".contains(String.valueOf(c))) {  // 移动
                 move(c);
+            } else if (c == ':') {  // 可能是要存档
+                while (!StdDraw.hasNextKeyTyped()) ;
+                c = StdDraw.nextKeyTyped();
+                if (c == 'Q' || c == 'q') {
+                    save("archive.txt");
+                }
             }
         }
     }
@@ -490,6 +494,7 @@ public class Engine {
         } catch (IOException e) {
             log.error("e: ", e);
         }
+        System.exit(0);  // 存档后立刻结束程序
     }
 
     public TETile[][] load(String path) {
